@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מאתר רכב ישראלי Pro</title>
+    <title>מאתר רכב ישראלי Pro - גרסה יציבה</title>
     
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -14,6 +14,7 @@
             --success: #10b981;
             --bg: #f3f4f6;
             --card: #ffffff;
+            --text: #1f2937;
         }
 
         body {
@@ -24,314 +25,283 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
             box-sizing: border-box;
         }
 
         .app-container {
             width: 100%;
-            max-width: 450px;
+            max-width: 420px;
             background: var(--card);
-            border-radius: 24px;
-            padding: 25px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             text-align: center;
         }
 
-        h1 { font-size: 26px; color: #111827; margin-bottom: 25px; }
+        h1 { font-size: 22px; color: var(--text); margin-bottom: 20px; }
 
-        .input-box {
+        .search-section {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
             margin-bottom: 20px;
         }
         
         input {
-            padding: 16px;
+            padding: 14px;
             border: 2px solid #e5e7eb;
-            border-radius: 14px;
-            font-size: 22px;
+            border-radius: 12px;
+            font-size: 20px;
             text-align: center;
             outline: none;
-            width: 100%;
-            box-sizing: border-box;
             transition: border-color 0.2s;
         }
 
         input:focus { border-color: var(--primary); }
 
-        .btn-group { display: flex; gap: 10px; }
+        .btn-main-group { display: flex; gap: 8px; }
         button {
             flex: 1;
-            padding: 14px;
+            padding: 12px;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             font-weight: bold;
-            font-size: 16px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: transform 0.1s;
         }
-        button:active { transform: scale(0.96); }
+        button:active { transform: scale(0.97); }
 
         .btn-search { background: var(--primary); color: white; }
         .btn-scan { background: var(--secondary); color: white; }
-        .btn-share { background: var(--success); color: white; width: 100%; margin-top: 20px; font-size: 18px; }
+        .btn-share { background: var(--success); color: white; width: 100%; margin-top: 15px; }
 
-        #scanner-view {
+        #scanner-container {
             display: none;
             margin-top: 15px;
             position: relative;
             background: #000;
-            border-radius: 16px;
+            border-radius: 12px;
             overflow: hidden;
         }
 
         video { width: 100%; display: block; }
-        .capture-btn {
+        .snap-btn {
             position: absolute;
-            bottom: 20px;
+            bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
-            background: white;
-            padding: 12px 24px;
-            border-radius: 50px;
-            border: none;
-            font-weight: bold;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            background: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
         }
 
-        #result {
+        #result-card {
             display: none;
             text-align: right;
-            background: #f8fafc;
-            padding: 20px;
-            border-radius: 18px;
-            margin-top: 25px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
-        .row:last-child { border: none; }
-        .label { font-weight: 600; color: #64748b; }
-        .val { font-weight: 700; color: #1e293b; }
-
-        .history-section {
-            margin-top: 30px;
-            text-align: right;
-            border-top: 1px solid #f1f5f9;
-            padding-top: 15px;
-        }
-
-        .history-item {
-            background: #fff;
-            padding: 12px;
-            border: 1px solid #e2e8f0;
+            background: #f9fafb;
+            padding: 15px;
             border-radius: 12px;
-            margin-top: 8px;
+            margin-top: 20px;
+            border: 1px solid #edf2f7;
+        }
+
+        .data-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; }
+        .data-row:last-child { border: none; }
+        .data-label { color: #6b7280; font-size: 14px; }
+        .data-val { font-weight: bold; color: var(--text); }
+
+        .history-box {
+            margin-top: 25px;
+            text-align: right;
+        }
+
+        .hist-item {
+            background: #fff;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-top: 6px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
-            align-items: center;
         }
 
-        .loader { display: none; margin: 20px 0; color: var(--primary); font-weight: bold; }
-        .error { display: none; color: #b91c1c; background: #fef2f2; padding: 12px; border-radius: 12px; margin-top: 15px; font-size: 14px; border: 1px solid #fee2e2; }
+        #status-msg { display: none; margin: 15px 0; color: var(--primary); font-size: 14px; }
+        #error-msg { display: none; color: #dc2626; background: #fee2e2; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 13px; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <h1>🚗 מאתר רכב ישראלי</h1>
+    <h1>🚗 סורק רכב ישראל</h1>
 
-    <div class="input-box">
-        <input type="number" id="lpInput" placeholder="מספר רכב (למשל 12345678)" inputmode="numeric">
-        <div class="btn-group">
-            <button class="btn-search" onclick="checkVehicle()">חפש רכב</button>
-            <button class="btn-scan" onclick="startScanner()">📷 סרוק</button>
+    <div class="search-section">
+        <input type="number" id="lpInput" placeholder="הכנס מספר רכב" inputmode="numeric">
+        <div class="btn-main-group">
+            <button class="btn-search" onclick="fetchVehicle()">חיפוש</button>
+            <button class="btn-scan" onclick="openCamera()">📷 סריקה</button>
         </div>
     </div>
 
-    <div id="scanner-view">
+    <div id="scanner-container">
         <video id="video" playsinline></video>
-        <button class="capture-btn" onclick="captureAndProcess()">לכידה ופענוח</button>
+        <button class="snap-btn" onclick="capturePhoto()">צלם מספר</button>
         <canvas id="canvas" style="display:none;"></canvas>
     </div>
 
-    <div id="loader" class="loader">מתחבר למאגר...</div>
-    <div id="error" class="error"></div>
+    <div id="status-msg">טוען...</div>
+    <div id="error-msg"></div>
 
-    <div id="result">
-        <div class="row"><span class="label">יצרן:</span> <span class="val" id="res_brand"></span></div>
-        <div class="row"><span class="label">דגם:</span> <span class="val" id="res_model"></span></div>
-        <div class="row"><span class="label">שנה:</span> <span class="val" id="res_year"></span></div>
-        <div class="row"><span class="label">צבע:</span> <span class="val" id="res_color"></span></div>
-        <div class="row"><span class="label">טסט עד:</span> <span class="val" id="res_test"></span></div>
-        <button class="btn-share" onclick="shareInfo()">📤 שתף פרטים</button>
+    <div id="result-card">
+        <div class="data-row"><span class="data-label">יצרן:</span> <span class="data-val" id="v_brand"></span></div>
+        <div class="data-row"><span class="data-label">דגם:</span> <span class="data-val" id="v_model"></span></div>
+        <div class="data-row"><span class="data-label">שנה:</span> <span class="data-val" id="v_year"></span></div>
+        <div class="data-row"><span class="data-label">צבע:</span> <span class="data-val" id="v_color"></span></div>
+        <div class="data-row"><span class="data-label">טסט בתוקף:</span> <span class="data-val" id="v_test"></span></div>
+        <button class="btn-share" onclick="shareToWa()">שתף בוואטסאפ</button>
     </div>
 
-    <div class="history-section">
-        <h3 style="font-size: 15px; color: #64748b; margin-bottom: 10px;">חיפושים אחרונים:</h3>
-        <div id="historyItems"></div>
+    <div class="history-box">
+        <p style="font-size: 14px; color: #9ca3af; margin-bottom: 5px;">חיפושים אחרונים:</p>
+        <div id="historyList"></div>
     </div>
 </div>
 
 <script>
-    const RESOURCE_ID = '053ad243-5e8b-421d-ad85-a3a403e3131d';
-    let currentCar = null;
-    let stream = null;
+    const RID = '053ad243-5e8b-421d-ad85-a3a403e3131d';
+    let currentData = null;
+    let cameraStream = null;
 
-    window.onload = loadHistory;
+    window.onload = renderHistory;
 
-    // --- מנוע חיבור הישרדותי (Fallback Mechanism) ---
-    async function checkVehicle(targetLp = null) {
-        const lp = targetLp || document.getElementById('lpInput').value.trim();
-        if (!lp || lp.length < 7) {
-            showError("נא להזין מספר רכב תקין (7-8 ספרות)");
-            return;
-        }
+    // פונקציית החיפוש המשודרגת
+    async function fetchVehicle(manualLp = null) {
+        const lp = manualLp || document.getElementById('lpInput').value.trim();
+        if (!lp) return;
 
-        showLoader(true, "מחפש נתונים בשלושה ערוצים...");
-        hideError();
-        document.getElementById('result').style.display = 'none';
+        updateStatus(true, "מתחבר למאגר הממשלתי...");
+        showError(null);
+        document.getElementById('result-card').style.display = 'none';
 
-        // הגדרת שאילתות ופרוקסים שונים לעקיפת חסימות
-        const sql = `SELECT * from "${RESOURCE_ID}" WHERE mispar_rechev = ${lp}`;
-        const urls = [
-            `https://data.gov.il/api/3/action/datastore_search_sql?sql=${encodeURIComponent(sql)}`, // ישיר
-            `https://api.allorigins.win/get?url=${encodeURIComponent(`https://data.gov.il/api/3/action/datastore_search?resource_id=${RESOURCE_ID}&q=${lp}`)}`, // AllOrigins
-            `https://corsproxy.io/?${encodeURIComponent(`https://data.gov.il/api/3/action/datastore_search?resource_id=${RESOURCE_ID}&filters={"mispar_rechev":"${lp}"}`)}` // CorsProxy
-        ];
-
-        for (let url of urls) {
-            try {
-                const response = await fetch(url);
-                if (!response.ok) continue;
-
-                let data = await response.json();
-                
-                // נירמול התשובה לפי סוג הפרוקסי שחזר
-                let finalData = data.result?.records || 
-                               (data.contents ? JSON.parse(data.contents).result.records : null);
-
-                if (finalData && finalData.length > 0) {
-                    currentCar = finalData[0];
-                    displayResult(currentCar);
-                    saveHistory(lp, currentCar.tozeret_nm);
-                    showLoader(false);
-                    return; // הצלחנו!
-                }
-            } catch (e) {
-                console.log("Channel failed, trying next...");
-            }
-        }
-
-        showLoader(false);
-        showError("שגיאת תקשורת. המאגר הממשלתי חסום כרגע. נסה שוב בעוד דקה.");
-    }
-
-    function displayResult(car) {
-        document.getElementById('res_brand').innerText = car.tozeret_nm || 'לא ידוע';
-        document.getElementById('res_model').innerText = car.kinuy_mishkari || 'לא ידוע';
-        document.getElementById('res_year').innerText = car.shnat_yitzur || '-';
-        document.getElementById('res_color').innerText = car.tzeva_rechev || '-';
-        document.getElementById('res_test').innerText = car.tokef_test || '-';
-        document.getElementById('result').style.display = 'block';
-    }
-
-    // --- מצלמה ו-OCR ---
-    async function startScanner() {
-        const scannerView = document.getElementById('scanner-view');
-        const video = document.getElementById('video');
-        scannerView.style.display = 'block';
-        hideError();
+        // מנסה שתי שיטות שליפה במקביל כדי לעקוף חסימות
+        const directUrl = `https://data.gov.il/api/3/action/datastore_search?resource_id=${RID}&q=${lp}`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(directUrl)}`;
 
         try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            video.srcObject = stream;
-            video.play();
+            let records = [];
+            
+            // נסיון 1: ישיר (מהיר יותר אם עובד)
+            try {
+                const res = await fetch(directUrl);
+                const json = await res.json();
+                records = json.result.records;
+            } catch (e) { console.log("Direct fetch failed, using proxy..."); }
+
+            // נסיון 2: דרך פרוקסי (אם הישיר נחסם)
+            if (records.length === 0) {
+                const res = await fetch(proxyUrl);
+                const json = await res.json();
+                const content = JSON.parse(json.contents);
+                records = content.result.records;
+            }
+
+            // סינון תוצאה מדויקת
+            const car = records.find(r => String(r.mispar_rechev).includes(lp));
+
+            if (car) {
+                currentData = car;
+                showData(car);
+                addToHistory(lp, car.tozeret_nm);
+            } else {
+                showError("הרכב לא נמצא במאגר. בדוק את המספר.");
+            }
         } catch (err) {
-            showError("אין גישה למצלמה. בדוק הרשאות בדפדפן.");
-            scannerView.style.display = 'none';
+            showError("שגיאת תקשורת זמנית. נסה שוב.");
+        } finally {
+            updateStatus(false);
         }
     }
 
-    async function captureAndProcess() {
+    function showData(car) {
+        document.getElementById('v_brand').innerText = car.tozeret_nm;
+        document.getElementById('v_model').innerText = car.kinuy_mishkari;
+        document.getElementById('v_year').innerText = car.shnat_yitzur;
+        document.getElementById('v_color').innerText = car.tzeva_rechev;
+        document.getElementById('v_test').innerText = car.tokef_test;
+        document.getElementById('result-card').style.display = 'block';
+    }
+
+    // מצלמה וסריקה
+    async function openCamera() {
+        const container = document.getElementById('scanner-container');
+        const video = document.getElementById('video');
+        container.style.display = 'block';
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            video.srcObject = cameraStream;
+            video.play();
+        } catch (e) { showError("אין גישה למצלמה"); }
+    }
+
+    async function capturePhoto() {
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const context = canvas.getContext('2d');
-
+        const ctx = canvas.getContext('2d');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0);
-
-        if (stream) stream.getTracks().forEach(t => t.stop());
-        document.getElementById('scanner-view').style.display = 'none';
-
-        showLoader(true, "מעבד תמונה ומפענח מספר...");
+        ctx.drawImage(video, 0, 0);
         
+        cameraStream.getTracks().forEach(t => t.stop());
+        document.getElementById('scanner-container').style.display = 'none';
+        
+        updateStatus(true, "מפענח מספר...");
         try {
-            const result = await Tesseract.recognize(canvas.toDataURL(), 'eng');
-            const cleanText = result.data.text.replace(/\D/g, ''); 
-            
-            if (cleanText.length >= 7) {
-                document.getElementById('lpInput').value = cleanText;
-                checkVehicle(cleanText);
-            } else {
-                showError("לא זוהתה לוחית תקינה. נסה לצלם מקרוב יותר.");
-            }
-        } catch (e) {
-            showError("שגיאה בעיבוד התמונה.");
-        } finally {
-            showLoader(false);
-        }
+            const out = await Tesseract.recognize(canvas.toDataURL(), 'eng');
+            const num = out.data.text.replace(/\D/g, '');
+            if (num.length >= 7) {
+                document.getElementById('lpInput').value = num;
+                fetchVehicle(num);
+            } else { showError("לא זוהה מספר תקין"); }
+        } catch (e) { showError("שגיאה בעיבוד התמונה"); }
+        finally { updateStatus(false); }
     }
 
-    // --- שיתוף והיסטוריה ---
-    function shareInfo() {
-        if (!currentCar) return;
-        const text = `פרטי רכב ${currentCar.mispar_rechev}:\nיצרן: ${currentCar.tozeret_nm}\nדגם: ${currentCar.kinuy_mishkari}\nשנה: ${currentCar.shnat_yitzur}\nצבע: ${currentCar.tzeva_rechev}\nטסט עד: ${currentCar.tokef_test}`;
-        
-        if (navigator.share) {
-            navigator.share({ title: 'מידע על רכב', text: text });
-        } else {
-            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
-        }
+    // עזרים
+    function shareToWa() {
+        const t = `רכב ${currentData.mispar_rechev}: ${currentData.tozeret_nm} ${currentData.kinuy_mishkari}, שנת ${currentData.shnat_yitzur}. טסט עד: ${currentData.tokef_test}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(t)}`);
     }
 
-    function saveHistory(lp, name) {
-        let history = JSON.parse(localStorage.getItem('il_cars_vfinal') || '[]');
-        history = history.filter(h => h.lp !== lp);
-        history.unshift({ lp, name });
-        localStorage.setItem('il_cars_vfinal', JSON.stringify(history.slice(0, 5)));
-        loadHistory();
+    function addToHistory(lp, name) {
+        let h = JSON.parse(localStorage.getItem('car_h') || '[]');
+        h = h.filter(x => x.lp !== lp);
+        h.unshift({lp, name});
+        localStorage.setItem('car_h', JSON.stringify(h.slice(0, 5)));
+        renderHistory();
     }
 
-    function loadHistory() {
-        const history = JSON.parse(localStorage.getItem('il_cars_vfinal') || '[]');
-        const div = document.getElementById('historyItems');
-        div.innerHTML = history.length ? history.map(h => `
-            <div class="history-item" onclick="checkVehicle('${h.lp}')">
-                <span style="font-weight:bold; font-size:18px;">${h.lp}</span>
-                <span style="color:#64748b;">${h.name}</span>
+    function renderHistory() {
+        const h = JSON.parse(localStorage.getItem('car_h') || '[]');
+        document.getElementById('historyList').innerHTML = h.map(x => `
+            <div class="hist-item" onclick="fetchVehicle('${x.lp}')">
+                <b>${x.lp}</b> <span>${x.name}</span>
             </div>
-        `).join('') : '<p style="color:#94a3b8; font-size:13px; text-align:center;">אין חיפושים אחרונים</p>';
+        `).join('');
     }
 
-    function showLoader(show, text = "") {
-        const l = document.getElementById('loader');
-        l.innerText = text;
-        l.style.display = show ? 'block' : 'none';
+    function updateStatus(s, t = "") {
+        const m = document.getElementById('status-msg');
+        m.innerText = t;
+        m.style.display = s ? 'block' : 'none';
     }
 
-    function showError(msg) {
-        const e = document.getElementById('error');
-        e.innerText = msg;
-        e.style.display = 'block';
+    function showError(m) {
+        const e = document.getElementById('error-msg');
+        if(m) { e.innerText = m; e.style.display = 'block'; }
+        else { e.style.display = 'none'; }
     }
-
-    function hideError() { document.getElementById('error').style.display = 'none'; }
 </script>
-
 </body>
 </html>
