@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מאתר רכב ישראלי</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --success: #10b981;
+            --bg: #f3f4f6;
+            --text: #1f2937;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            align-items: center; /* מרכוז אנכי */
+            justify-content: center; /* מרכוז אופקי */
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .main-card {
+            background: white;
+            width: 100%;
+            max-width: 450px;
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 { margin-bottom: 25px; font-size: 26px; }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 18px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus { border-color: var(--primary); }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        #result {
+            display: none;
+            background: #f9fafb;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #edf2f7;
+            text-align: right;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .data-row:last-child { border: none; }
+
+        .label { font-weight: 600; color: #6b7280; }
+
+        .share-btn {
+            background: var(--success);
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .history-section {
+            margin-top: 30px;
+            text-align: right;
+        }
+
+        .history-item {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .error { color: #ef4444; background: #fee2e2; padding: 10px; border-radius: 10px; margin-top: 15px; display: none; }
+        .loader { display: none; margin: 15px 0; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="main-card">
+    <h1>🚗 מאתר רכב ישראלי</h1>
+    
+    <div class="search-box">
+        <input type="number" id="lpInput" placeholder="מספר רכב (למשל 12345678)" inputmode="numeric">
+        <button onclick="fetchVehicleData()">חפש</button>
+    </div>
+
+    <div id="loader" class="loader">מתחבר למאגר הממשלתי...</div>
+    <div id="errorMsg" class="error"></div>
+
+    <div id="result">
+        <div class="data-row"><span class="label">יצרן:</span> <span id="r_brand"></span></div>
+        <div class="data-row"><span class="label">דגם:</span> <span id="r_model"></span></div>
+        <div class="data-row"><span class="label">שנה:</span> <span id="r_year"></span></div>
+        <div class="data-row"><span class="label">צבע:</span> <span id="r_color"></span></div>
+        <div class="data-row"><span class="label">טסט בתוקף עד:</span> <span id="r_test"></span></div>
+        
+        <button class="share-btn" onclick="shareData()">📤 שתף פרטים</button>
+    </div>
+
+    <div class="history-section">
+        <small>חיפושים אחרונים:</small>
+        <div id="historyList"></div>
+    </div>
+</div>
+
+<script>
+    const API_URL = "https://data.gov.il/api/3/action/datastore_search";
+    const RESOURCE_ID = "053ad243-5e8b-421d-ad85-a3a403e3131d";
+    let lastFoundCar = null;
+
+    // טעינת היסטוריה מהזיכרון
+    window.onload = renderHistory;
+
+    async function fetchVehicleData(targetLp = null) {
+        const lp = targetLp || document.getElementById('lpInput').value.trim();
+        if (!lp) return;
+
+        // איפוס תצוגה
+        document.getElementById('result').style.display = 'none';
+        document.getElementById('errorMsg').style.display = 'none';
+        document.getElementById('loader').style.display = 'block';
+
+        try {
+            // שימוש בפרמטר q מבצע חיפוש טקסטואלי רחב יותר שלעיתים עוקף מגבלות מסוימות
+            const url = `${API_URL}?resource_id=${RESOURCE_ID}&q=${lp}`;
+            
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Connection Error");
+            
+            const data = await response.json();
+            
+            // סינון תוצאות כדי למצוא התאמה מדויקת בלבד
+            const car = data.result.records.find(r => String(r.mispar_rechev).includes(lp));
+
+            if (car) {
+                lastFoundCar = car;
+                displayCar(car);
+                addToHistory(lp, `${car.tozeret_nm}`);
+            } else {
+                showError("הרכב לא נמצא במאגר");
+            }
+        } catch (err) {
+            showError("שגיאת תקשורת. נסה שוב או בדוק חיבור אינטרנט.");
+        } finally {
+            document.getElementById('loader').style.display = 'none';
+        }
+    }
+
+    function displayCar(car) {
+        document.getElementById('r_brand').innerText = car.tozeret_nm;
+        document.getElementById('r_model').innerText = car.kinuy_mishkari;
+        document.getElementById('r_year').innerText = car.shnat_yitzur;
+        document.getElementById('r_color').innerText = car.tzeva_rechev;
+        document.getElementById('r_test').innerText = car.tokef_test;
+        document.getElementById('result').style.display = 'block';
+    }
+
+    function shareData() {
+        if (!lastFoundCar) return;
+        const msg = `פרטי רכב ${lastFoundCar.mispar_rechev}:\n${lastFoundCar.tozeret_nm} ${lastFoundCar.kinuy_mishkari}\nשנה: ${lastFoundCar.shnat_yitzur}\nצבע: ${lastFoundCar.tzeva_rechev}\nטסט עד: ${lastFoundCar.tokef_test}`;
+        
+        if (navigator.share) {
+            navigator.share({ title: 'מידע על רכב', text: msg });
+        } else {
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
+        }
+    }
+
+    function addToHistory(lp, name) {
+        let history = JSON.parse(localStorage.getItem('my_cars') || '[]');
+        history = history.filter(h => h.lp !== lp);
+        history.unshift({ lp, name });
+        localStorage.setItem('my_cars', JSON.stringify(history.slice(0, 3)));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const history = JSON.parse(localStorage.getItem('my_cars') || '[]');
+        const list = document.getElementById('historyList');
+        list.innerHTML = history.map(h => `
+            <div class="history-item" onclick="fetchVehicleData('${h.lp}')">
+                <span>${h.lp}</span>
+                <span>${h.name}</span>
+            </div>
+        `).join('');
+    }
+
+    function showError(msg) {
+        const err = document.getElementById('errorMsg');
+        err.innerText = msg;
+        err.style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
