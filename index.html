@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מאתר רכב ישראלי Pro</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #f59e0b;
+            --success: #10b981;
+            --bg: #f3f4f6;
+            --card: #ffffff;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            background: var(--card);
+            border-radius: 24px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 { font-size: 24px; color: #1f2937; margin-bottom: 20px; }
+
+        .search-area { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        
+        input {
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 20px;
+            text-align: center;
+            outline: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        input:focus { border-color: var(--primary); }
+
+        .btn-group { display: flex; gap: 8px; }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        button:active { transform: scale(0.98); }
+
+        .btn-search { background: var(--primary); color: white; }
+        .btn-scan { background: var(--secondary); color: white; }
+        .btn-share { background: var(--success); color: white; width: 100%; margin-top: 15px; }
+
+        #scanner-view {
+            display: none;
+            margin-top: 15px;
+            position: relative;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        video { width: 100%; display: block; }
+        .capture-btn {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.9);
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: none;
+            font-weight: bold;
+        }
+
+        #result {
+            display: none;
+            text-align: right;
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 16px;
+            margin-top: 20px;
+            border: 1px solid #eee;
+        }
+
+        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .row:last-child { border: none; }
+        .label { font-weight: bold; color: #6b7280; }
+
+        .history-list {
+            margin-top: 25px;
+            text-align: right;
+            width: 100%;
+        }
+
+        .history-item {
+            background: white;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            margin-top: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .loader { display: none; margin: 15px; color: var(--primary); font-weight: bold; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        
+        .error { display: none; color: #ef4444; background: #fee2e2; padding: 12px; border-radius: 10px; margin-top: 15px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <h1>🚗 מאתר רכב ישראלי</h1>
+
+    <div class="search-area">
+        <input type="number" id="lpInput" placeholder="הזן מספר רכב (7-8 ספרות)" inputmode="numeric">
+        <div class="btn-group">
+            <button class="btn-search" onclick="checkVehicle()">חפש נתונים</button>
+            <button class="btn-scan" onclick="startScanner()">📷 סריקה</button>
+        </div>
+    </div>
+
+    <div id="scanner-view">
+        <video id="video" playsinline></video>
+        <button class="capture-btn" onclick="captureAndProcess()">צלם ופענח</button>
+        <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+
+    <div id="loader" class="loader">מתחבר למאגר...</div>
+    <div id="error" class="error"></div>
+
+    <div id="result">
+        <div class="row"><span class="label">יצרן:</span> <span id="res_brand"></span></div>
+        <div class="row"><span class="label">דגם:</span> <span id="res_model"></span></div>
+        <div class="row"><span class="label">שנה:</span> <span id="res_year"></span></div>
+        <div class="row"><span class="label">צבע:</span> <span id="res_color"></span></div>
+        <div class="row"><span class="label">טסט עד:</span> <span id="res_test"></span></div>
+        <button class="btn-share" onclick="shareInfo()">📤 שתף פרטים</button>
+    </div>
+
+    <div class="history-list">
+        <h3 style="font-size: 16px; margin-bottom: 5px;">חיפושים אחרונים</h3>
+        <div id="historyItems"></div>
+    </div>
+</div>
+
+<script>
+    const RESOURCE_ID = '053ad243-5e8b-421d-ad85-a3a403e3131d';
+    let currentCar = null;
+    let stream = null;
+
+    window.onload = loadHistory;
+
+    // --- לוגיקת חיבור חסינה לשגיאות תקשורת ---
+    async function checkVehicle(targetLp = null) {
+        const lp = targetLp || document.getElementById('lpInput').value.trim();
+        if (!lp || lp.length < 7) {
+            showError("נא להזין מספר רכב תקין (7-8 ספרות)");
+            return;
+        }
+
+        showLoader(true, "מתחבר למאגר הממשלתי...");
+        hideError();
+        document.getElementById('result').style.display = 'none';
+
+        // שיטת שאילתת SQL - הכי מדויקת
+        const sqlQuery = `SELECT * from "${RESOURCE_ID}" WHERE mispar_rechev = ${lp}`;
+        const targetUrl = `https://data.gov.il/api/3/action/datastore_search_sql?sql=${encodeURIComponent(sqlQuery)}`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+
+        try {
+            let data;
+            try {
+                // ניסיון ראשון: ישיר
+                const response = await fetch(targetUrl);
+                data = await response.json();
+            } catch (e) {
+                // ניסיון שני: דרך פרוקסי (למעקף CORS ב-GitHub)
+                const proxyRes = await fetch(proxyUrl);
+                const proxyData = await proxyRes.json();
+                data = JSON.parse(proxyData.contents);
+            }
+
+            if (data.result.records && data.result.records.length > 0) {
+                currentCar = data.result.records[0];
+                displayResult(currentCar);
+                saveHistory(lp, currentCar.tozeret_nm);
+            } else {
+                showError("הרכב לא נמצא במאגר הממשלתי.");
+            }
+        } catch (err) {
+            showError("שגיאת תקשורת. ייתכן שיש עומס על השרת הממשלתי.");
+        } finally {
+            showLoader(false);
+        }
+    }
+
+    function displayResult(car) {
+        document.getElementById('res_brand').innerText = car.tozeret_nm;
+        document.getElementById('res_model').innerText = car.kinuy_mishkari;
+        document.getElementById('res_year').innerText = car.shnat_yitzur;
+        document.getElementById('res_color').innerText = car.tzeva_rechev;
+        document.getElementById('res_test').innerText = car.tokef_test;
+        document.getElementById('result').style.display = 'block';
+    }
+
+    // --- מצלמה ו-OCR ---
+    async function startScanner() {
+        const scannerView = document.getElementById('scanner-view');
+        const video = document.getElementById('video');
+        scannerView.style.display = 'block';
+        hideError();
+
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            video.srcObject = stream;
+            video.play();
+        } catch (err) {
+            showError("אין גישה למצלמה. וודא שנתת הרשאה.");
+            scannerView.style.display = 'none';
+        }
+    }
+
+    async function captureAndProcess() {
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0);
+
+        if (stream) stream.getTracks().forEach(t => t.stop());
+        document.getElementById('scanner-view').style.display = 'none';
+
+        showLoader(true, "מפענח לוחית רישוי...");
+        
+        try {
+            const result = await Tesseract.recognize(canvas.toDataURL(), 'eng');
+            const cleanText = result.data.text.replace(/\D/g, ''); // חילוץ מספרים בלבד
+            
+            if (cleanText.length >= 7) {
+                document.getElementById('lpInput').value = cleanText;
+                checkVehicle(cleanText);
+            } else {
+                showError("לא זוהה מספר תקין. נסה שוב או הקלד ידנית.");
+            }
+        } catch (e) {
+            showError("שגיאה בעיבוד התמונה.");
+        } finally {
+            showLoader(false);
+        }
+    }
+
+    // --- עזרים ---
+    function shareInfo() {
+        if (!currentCar) return;
+        const text = `פרטי רכב ${currentCar.mispar_rechev}:\n🚗 יצרן: ${currentCar.tozeret_nm}\n📦 דגם: ${currentCar.kinuy_mishkari}\n📅 שנה: ${currentCar.shnat_yitzur}\n✅ טסט עד: ${currentCar.tokef_test}`;
+        
+        if (navigator.share) {
+            navigator.share({ title: 'מידע על רכב', text: text });
+        } else {
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
+        }
+    }
+
+    function saveHistory(lp, name) {
+        let history = JSON.parse(localStorage.getItem('isra_cars_v3') || '[]');
+        history = history.filter(h => h.lp !== lp);
+        history.unshift({ lp, name });
+        localStorage.setItem('isra_cars_v3', JSON.stringify(history.slice(0, 5)));
+        loadHistory();
+    }
+
+    function loadHistory() {
+        const history = JSON.parse(localStorage.getItem('isra_cars_v3') || '[]');
+        const div = document.getElementById('historyItems');
+        div.innerHTML = history.length ? history.map(h => `
+            <div class="history-item" onclick="checkVehicle('${h.lp}')">
+                <strong>${h.lp}</strong>
+                <span style="color:#666; font-size: 14px;">${h.name}</span>
+            </div>
+        `).join('') : '<p style="color:#999; font-size:12px;">אין חיפושים קודמים</p>';
+    }
+
+    function showLoader(show, text = "") {
+        const l = document.getElementById('loader');
+        l.innerText = text;
+        l.style.display = show ? 'block' : 'none';
+    }
+
+    function showError(msg) {
+        const e = document.getElementById('error');
+        e.innerText = msg;
+        e.style.display = 'block';
+    }
+
+    function hideError() { document.getElementById('error').style.display = 'none'; }
+</script>
+
+</body>
+</html>
